@@ -83,12 +83,60 @@ async def analyze_spending(
 
     try:
         # ============================================================
-        # ADIM 1: Plaid'den Banka Verisi Çekme
+        # ADIM 0: Kullanıcı Doğrulama (Firebase Singleton)
         # ============================================================
-        print("\n📥 ADIM 1: Plaid'den banka işlemleri çekiliyor...")
+        print("\n👤 ADIM 0: Kullanıcı kaydı kontrol ediliyor...")
 
-        plaid_service = PlaidService()
-        raw_transactions = plaid_service.get_transactions(period=period)
+        firebase_db = FirebaseDB()
+        is_sandbox_mode = True  # Varsayılan: sandbox modu
+        user_access_token = None
+
+        if firebase_db.is_connected:
+            user_doc = firebase_db.get_document("users", user_id)
+
+            if user_doc:
+                print(f"   ✅ Kullanıcı bulundu: {user_id}")
+                print(f"   📋 Kayıt tarihi: {user_doc.get('registered_at', 'bilinmiyor')}")
+
+                # Kullanıcının Plaid access_token'ı var mı kontrol et
+                user_access_token = user_doc.get("plaid_access_token")
+
+                if user_access_token:
+                    is_sandbox_mode = False
+                    print(f"   🔑 Plaid access_token MEVCUT → Gerçek banka verisi çekilecek.")
+                else:
+                    print(f"   ⚠️  Plaid access_token YOK → Sandbox (mock) modu aktif.")
+            else:
+                # Kullanıcı kayıtlı değilse otomatik oluştur
+                print(f"   ℹ️  Kullanıcı bulunamadı, otomatik kayıt oluşturuluyor...")
+                firebase_db.save_document(
+                    "users",
+                    {
+                        "user_id": user_id,
+                        "display_name": "",
+                        "email": "",
+                        "registered_at": datetime.now(timezone.utc).isoformat(),
+                    },
+                    document_id=user_id,
+                )
+                print(f"   ✅ Kullanıcı otomatik kaydedildi: {user_id}")
+                print(f"   ⚠️  Plaid access_token YOK → Sandbox (mock) modu aktif.")
+        else:
+            print("   ⚠️  Firebase bağlantısı yok → Sandbox modu ile devam ediliyor.")
+
+        # ============================================================
+        # ADIM 1: Banka Verisi Çekme (Plaid veya Mock)
+        # ============================================================
+        if is_sandbox_mode:
+            print(f"\n📥 ADIM 1: Sandbox modu — Mock veriler üretiliyor...")
+            plaid_service = PlaidService()  # access_token yok → sandbox
+            raw_transactions = plaid_service.get_mock_transactions()
+            print(f"   🎭 Veri kaynağı: MOCK DATA (Starbucks, Migros, Uber...)")
+        else:
+            print(f"\n📥 ADIM 1: Gerçek banka verisi çekiliyor (Plaid API)...")
+            plaid_service = PlaidService(access_token=user_access_token)
+            raw_transactions = plaid_service.get_transactions(period=period)
+            print(f"   🏦 Veri kaynağı: PLAID API (gerçek banka)")
 
         if not raw_transactions:
             return {
@@ -101,8 +149,11 @@ async def analyze_spending(
                     "categories": [],
                     "ai_advice": "Bu dönemde herhangi bir harcama kaydı bulunamadı.",
                     "analyzed_at": datetime.now(timezone.utc).isoformat(),
+                    "data_source": "sandbox" if is_sandbox_mode else "plaid",
                 },
             }
+
+        print(f"   📊 Toplam {len(raw_transactions)} işlem hazır.")
 
         # ============================================================
         # ADIM 2: Gemini AI ile Analiz
@@ -193,6 +244,8 @@ async def analyze_spending(
                 "category_count": len(ai_analysis.get("categories", [])),
                 "transaction_count": len(all_expenses),
                 "ai_advice": ai_analysis.get("advice", ""),
+                "data_source": "sandbox" if is_sandbox_mode else "plaid",
+                "analyzed_at": datetime.now(timezone.utc).isoformat(),
             }
             summary_path = f"users/{user_id}/analysis_history"
             summary_id = firebase_db.save_document(summary_path, summary_data)
@@ -230,6 +283,7 @@ async def analyze_spending(
                 "categories": response_categories,
                 "ai_advice": ai_analysis.get("advice", ""),
                 "analyzed_at": datetime.now(timezone.utc).isoformat(),
+                "data_source": "sandbox" if is_sandbox_mode else "plaid",
             },
         }
 
@@ -238,6 +292,7 @@ async def analyze_spending(
         print(f"   💰 Toplam Harcama: ${response_data['data']['total_spending']}")
         print(f"   📂 Kategori Sayısı: {len(response_categories)}")
         print(f"   🧾 İşlem Sayısı: {len(all_expenses)}")
+        print(f"   🎭 Veri Kaynağı: {'SANDBOX (Mock)' if is_sandbox_mode else 'PLAID (Gerçek)'}")
         print(f"   🔷 Design Patterns: Singleton ✓ | Factory ✓")
         print(f"{'='*60}\n")
 

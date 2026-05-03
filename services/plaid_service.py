@@ -51,16 +51,20 @@ class PlaidService:
     Attributes:
         _client: Plaid API istemcisi.
         _access_token: Sandbox erişim token'ı (lazy initialization).
+        _is_sandbox_mode: Sandbox/mock modunda mı çalışıyor.
     """
 
     # Sandbox test bankası institution ID'si
     SANDBOX_INSTITUTION_ID = "ins_109508"
 
-    def __init__(self) -> None:
+    def __init__(self, access_token: str | None = None) -> None:
         """
-        Plaid API istemcisini Sandbox ortamı için yapılandırır.
+        Plaid API istemcisini yapılandırır.
 
-        Plaid client_id ve secret değerleri config.py'den okunur.
+        Args:
+            access_token: Opsiyonel. Kullanıcının Firebase'de kayıtlı
+                          Plaid access_token'ı. Verilirse doğrudan kullanılır,
+                          verilmezse Sandbox token oluşturulur.
         """
         configuration = plaid.Configuration(
             host=plaid.Environment.Sandbox,
@@ -71,7 +75,29 @@ class PlaidService:
         )
         api_client = plaid.ApiClient(configuration)
         self._client = plaid_api.PlaidApi(api_client)
-        self._access_token: str | None = None
+        self._access_token: str | None = access_token
+        self._is_sandbox_mode: bool = access_token is None
+
+    @property
+    def is_sandbox_mode(self) -> bool:
+        """Sandbox (mock) modunda mı çalışıyor."""
+        return self._is_sandbox_mode
+
+    def get_mock_transactions(self) -> list[dict[str, Any]]:
+        """
+        Sandbox mock verileri döner — access_token olmadan çalışır.
+
+        Kullanıcı henüz Plaid Link ile bankasını bağlamamışsa,
+        bu metod doğrudan çağrılarak mock veriler üretilir.
+        Plaid API'ye hiç istek atmaz.
+
+        Returns:
+            list[dict]: 6 adet gerçekçi sahte banka işlemi.
+        """
+        print("🔄 Sandbox modu aktif → Mock veriler üretiliyor (Plaid API atlanıyor)...")
+        mock_data = self._get_fallback_transactions()
+        print(f"📊 {len(mock_data)} sahte işlem üretildi.")
+        return mock_data
 
     def _create_sandbox_token(self) -> str:
         """
