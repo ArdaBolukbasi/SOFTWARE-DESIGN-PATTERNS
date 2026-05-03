@@ -1,0 +1,21 @@
+# AI Budget Tracker - Bağımlılıklar
+# ===================================
+
+# Web Framework
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# Firebase Admin SDK (Firestore)
+firebase-admin==6.6.0
+
+# Plaid API SDK
+plaid-python==29.0.0
+
+# Google Gemini AI (Yeni SDK)
+google-genai==1.14.0
+
+# Ortam Değişkenleri
+python-dotenv==1.1.0
+
+# HTTP İstemcisi (Plaid bağımlılığı)
+httpx==0.28.1
