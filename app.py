@@ -569,7 +569,79 @@ def render_dashboard():
     <div class="dash-bg"></div>
     """, unsafe_allow_html=True)
 
-    # ── Top Bar ──
+    # We'll render the topbar after we ensure data is fetched
+    uid = st.session_state.user_id
+
+    # ── Fetch Data ──
+    if st.session_state.dashboard_data is None:
+        loading_placeholder = st.empty()
+        
+        # Özel CSS ile ortalanmış dönen yuvarlak ve yazılar
+        loading_html = """
+        <style>
+        .loader-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 40vh;
+        }
+        .custom-spinner {
+            width: 70px;
+            height: 70px;
+            border: 6px solid rgba(139, 92, 246, 0.2);
+            border-radius: 50%;
+            border-top-color: #8b5cf6;
+            animation: spin 1s cubic-bezier(0.55, 0.085, 0.68, 0.53) infinite;
+            margin-bottom: 25px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loader-text {
+            font-size: 1.3rem;
+            color: #e2e8f0;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .loader-subtext {
+            font-size: 1rem;
+            color: #94a3b8;
+            text-align: center;
+        }
+        </style>
+        <div class="loader-container">
+            <div class="custom-spinner"></div>
+            <div class="loader-text">🤖 Gemini AI Bütçenizi Analiz Ediyor...</div>
+            <div class="loader-subtext">
+                Banka işlemleri çekiliyor...<br>
+                Yapay Zeka ile kategorize ediliyor...<br>
+                Firebase veritabanına işleniyor...
+            </div>
+        </div>
+        """
+        
+        loading_placeholder.markdown(loading_html, unsafe_allow_html=True)
+        
+        resp, err = api_analyze(uid)
+        
+        # Yükleme bitince o UI parçasını sil
+        loading_placeholder.empty()
+
+        if err:
+            st.error(f"❌ {err}")
+            st.info("Make sure your FastAPI backend is running on **http://127.0.0.1:8000**")
+            return
+        # Backend döner: {"status": "success", "data": {...}}
+        # İç "data" sözlüğünü çıkar, yoksa root'u kullan
+        if isinstance(resp, dict) and "data" in resp:
+            st.session_state.dashboard_data = resp["data"]
+        else:
+            st.session_state.dashboard_data = resp
+
+    # ── Top Bar (Rendered only after data is loaded) ──
     uid   = st.session_state.user_id
     dname = st.session_state.display_name or uid
 
@@ -591,22 +663,15 @@ def render_dashboard():
 
     st.markdown('<hr style="margin-bottom:1.4rem;">', unsafe_allow_html=True)
 
-    # ── Fetch Data ──
-    if st.session_state.dashboard_data is None:
-        with st.spinner("🤖 Gemini AI is analyzing your finances…"):
-            resp, err = api_analyze(uid)
-        if err:
-            st.error(f"❌ {err}")
-            st.info("Make sure your FastAPI backend is running on **http://127.0.0.1:8000**")
-            return
-        # Backend döner: {"status": "success", "data": {...}}
-        # İç "data" sözlüğünü çıkar, yoksa root'u kullan
-        if isinstance(resp, dict) and "data" in resp:
-            st.session_state.dashboard_data = resp["data"]
-        else:
-            st.session_state.dashboard_data = resp
-
     data = st.session_state.dashboard_data
+
+    # Ensure data is a dictionary (handles corrupted session state)
+    if not isinstance(data, dict):
+        st.error(f"❌ Invalid data format received from backend. Expected dictionary, got {type(data).__name__}.")
+        if st.button("Refresh Data"):
+            st.session_state.dashboard_data = None
+            st.rerun()
+        return
 
     # Normalize field names (backend uses total_spending, categories, ai_advice)
     total     = data.get("total_spending") or data.get("total_amount") or 0
