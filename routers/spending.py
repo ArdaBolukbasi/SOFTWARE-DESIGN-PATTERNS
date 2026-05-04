@@ -88,8 +88,6 @@ async def analyze_spending(
         print("\n👤 ADIM 0: Kullanıcı kaydı kontrol ediliyor...")
 
         firebase_db = FirebaseDB()
-        is_sandbox_mode = True  # Varsayılan: sandbox modu
-        user_access_token = None
 
         if firebase_db.is_connected:
             user_doc = firebase_db.get_document("users", user_id)
@@ -97,15 +95,6 @@ async def analyze_spending(
             if user_doc:
                 print(f"   ✅ Kullanıcı bulundu: {user_id}")
                 print(f"   📋 Kayıt tarihi: {user_doc.get('registered_at', 'bilinmiyor')}")
-
-                # Kullanıcının Plaid access_token'ı var mı kontrol et
-                user_access_token = user_doc.get("plaid_access_token")
-
-                if user_access_token:
-                    is_sandbox_mode = False
-                    print(f"   🔑 Plaid access_token MEVCUT → Gerçek banka verisi çekilecek.")
-                else:
-                    print(f"   ⚠️  Plaid access_token YOK → Sandbox (mock) modu aktif.")
             else:
                 # Kullanıcı kayıtlı değilse otomatik oluştur
                 print(f"   ℹ️  Kullanıcı bulunamadı, otomatik kayıt oluşturuluyor...")
@@ -120,38 +109,28 @@ async def analyze_spending(
                     document_id=user_id,
                 )
                 print(f"   ✅ Kullanıcı otomatik kaydedildi: {user_id}")
-                print(f"   ⚠️  Plaid access_token YOK → Sandbox (mock) modu aktif.")
         else:
-            print("   ⚠️  Firebase bağlantısı yok → Sandbox modu ile devam ediliyor.")
+            print("   ⚠️  Firebase bağlantısı yok, kullanıcı doğrulama atlandı.")
 
         # ============================================================
-        # ADIM 1: Banka Verisi Çekme (Plaid veya Mock)
+        # ADIM 1: Plaid Sandbox'tan Banka Verisi Çekme
         # ============================================================
-        if is_sandbox_mode:
-            print(f"\n📥 ADIM 1: Sandbox modu — Mock veriler üretiliyor...")
-            plaid_service = PlaidService()  # access_token yok → sandbox
-            raw_transactions = plaid_service.get_mock_transactions()
-            print(f"   🎭 Veri kaynağı: MOCK DATA (Starbucks, Migros, Uber...)")
-        else:
-            print(f"\n📥 ADIM 1: Gerçek banka verisi çekiliyor (Plaid API)...")
-            plaid_service = PlaidService(access_token=user_access_token)
-            raw_transactions = plaid_service.get_transactions(period=period)
-            print(f"   🏦 Veri kaynağı: PLAID API (gerçek banka)")
+        # Her zaman önce Plaid Sandbox API'yi dene.
+        # Sandbox token otomatik oluşturulur, gerçek sandbox verileri çekilir.
+        # Sadece Plaid boş dönerse mock data devreye girer (güvenlik ağı).
+        # ============================================================
+        print(f"\n📥 ADIM 1: Plaid Sandbox API'den banka işlemleri çekiliyor...")
 
-        if not raw_transactions:
-            return {
-                "status": "success",
-                "data": {
-                    "user_id": user_id,
-                    "period": period,
-                    "total_spending": 0,
-                    "currency": "USD",
-                    "categories": [],
-                    "ai_advice": "Bu dönemde herhangi bir harcama kaydı bulunamadı.",
-                    "analyzed_at": datetime.now(timezone.utc).isoformat(),
-                    "data_source": "sandbox" if is_sandbox_mode else "plaid",
-                },
-            }
+        plaid_service = PlaidService()
+        raw_transactions = plaid_service.get_transactions(period=period)
+        data_source = "plaid_sandbox"
+
+        # get_transactions zaten içinde fallback var ama burada da kontrol edelim
+        if raw_transactions:
+            print(f"   🏦 Veri kaynağı: PLAID SANDBOX API")
+        else:
+            print(f"   ⚠️  Plaid boş döndü, bu olmamalı (fallback zaten devrede).")
+            data_source = "mock"
 
         print(f"   📊 Toplam {len(raw_transactions)} işlem hazır.")
 
@@ -244,7 +223,7 @@ async def analyze_spending(
                 "category_count": len(ai_analysis.get("categories", [])),
                 "transaction_count": len(all_expenses),
                 "ai_advice": ai_analysis.get("advice", ""),
-                "data_source": "sandbox" if is_sandbox_mode else "plaid",
+                "data_source": data_source,
                 "analyzed_at": datetime.now(timezone.utc).isoformat(),
             }
             summary_path = f"users/{user_id}/analysis_history"
@@ -283,7 +262,7 @@ async def analyze_spending(
                 "categories": response_categories,
                 "ai_advice": ai_analysis.get("advice", ""),
                 "analyzed_at": datetime.now(timezone.utc).isoformat(),
-                "data_source": "sandbox" if is_sandbox_mode else "plaid",
+                "data_source": data_source,
             },
         }
 
@@ -292,7 +271,7 @@ async def analyze_spending(
         print(f"   💰 Toplam Harcama: ${response_data['data']['total_spending']}")
         print(f"   📂 Kategori Sayısı: {len(response_categories)}")
         print(f"   🧾 İşlem Sayısı: {len(all_expenses)}")
-        print(f"   🎭 Veri Kaynağı: {'SANDBOX (Mock)' if is_sandbox_mode else 'PLAID (Gerçek)'}")
+        print(f"   🎭 Veri Kaynağı: {data_source.upper()}")
         print(f"   🔷 Design Patterns: Singleton ✓ | Factory ✓")
         print(f"{'='*60}\n")
 

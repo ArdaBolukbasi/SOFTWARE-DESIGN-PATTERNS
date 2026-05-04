@@ -615,7 +615,7 @@ def render_dashboard():
     src       = data.get("data_source", "sandbox")
 
     # ── Sandbox Banner ──
-    if src == "sandbox":
+    if src in ("sandbox", "plaid_sandbox", "mock"):
         st.markdown("""
         <div class="sandbox-banner">
           <div class="sandbox-icon">⚠️</div>
@@ -733,8 +733,8 @@ def render_dashboard():
         st.markdown("<br>", unsafe_allow_html=True)
 
         # ── Data Source badge ──
-        if src == "sandbox":
-            badge_color, badge_icon, badge_label = "#f5a742", "🔬", "SANDBOX"
+        if src in ("sandbox", "plaid_sandbox", "mock"):
+            badge_color, badge_icon, badge_label = "#f5a742", "🔬", "PLAID SANDBOX"
         else:
             badge_color, badge_icon, badge_label = "#34d399", "🏦", "LIVE PLAID"
         st.markdown(f"""
