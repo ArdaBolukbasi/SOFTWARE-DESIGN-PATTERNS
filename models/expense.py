@@ -236,6 +236,38 @@ class HealthExpense(Expense):
 
 
 @dataclass
+class AutoPaymentExpense(Expense):
+    """
+    Otomatik işlemler ve otomatik ödemeleri temsil eder.
+    Örnek: AUTOMATIC PAYMENT - THANK vb.
+    """
+
+    @property
+    def category(self) -> str:
+        return "Otomatik İşlemler"
+
+    @property
+    def icon(self) -> str:
+        return "🔄"
+
+
+@dataclass
+class CreditCardPaymentExpense(Expense):
+    """
+    Kredi kartı borç ödemelerini temsil eder.
+    Örnek: CREDIT CARD 3333 PAYMENT *// vb.
+    """
+
+    @property
+    def category(self) -> str:
+        return "Kredi Kartı Ödeme"
+
+    @property
+    def icon(self) -> str:
+        return "💳"
+
+
+@dataclass
 class OtherExpense(Expense):
     """
     Diğer/Sınıflandırılamayan harcamaları temsil eder.
@@ -320,6 +352,18 @@ class ExpenseFactory:
         "sağlık": HealthExpense,
         "saglik": HealthExpense,
         "health": HealthExpense,
+        # Otomatik İşlemler varyasyonları
+        "otomatik işlemler": AutoPaymentExpense,
+        "otomatik islemler": AutoPaymentExpense,
+        "otomatik ödeme": AutoPaymentExpense,
+        "otomatik odeme": AutoPaymentExpense,
+        "automatic payment": AutoPaymentExpense,
+        # Kredi Kartı Ödeme varyasyonları
+        "kredi kartı ödeme": CreditCardPaymentExpense,
+        "kredi karti odeme": CreditCardPaymentExpense,
+        "kredi kartı": CreditCardPaymentExpense,
+        "credit card payment": CreditCardPaymentExpense,
+        "credit card": CreditCardPaymentExpense,
         # Diğer
         "diğer": OtherExpense,
         "diger": OtherExpense,
@@ -359,8 +403,8 @@ class ExpenseFactory:
             >>> expense.icon
             '🍔'
         """
-        # Kategori adını normalize et (küçük harf, boşluk temizliği)
-        normalized = category.strip().lower()
+        # Kategori adını normalize et (küçük harf, boşluk temizliği ve Türkçe İ/I harf hatası)
+        normalized = category.strip().replace("İ", "i").replace("I", "ı").lower()
 
         # Registry'den uygun sınıfı bul, bulamazsa OtherExpense kullan
         expense_class = cls._registry.get(normalized, OtherExpense)

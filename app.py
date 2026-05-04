@@ -474,6 +474,51 @@ def render_dashboard():
         box-shadow: 0 10px 40px rgba(0,0,0,0.35);
     }
 
+    /* ── Recent Transactions Row ── */
+    .txn-row {
+        background: rgba(14, 25, 60, 0.45);
+        border: 1px solid rgba(56, 100, 210, 0.15);
+        border-radius: 12px;
+        padding: 0.9rem 1.2rem;
+        margin-bottom: 0.6rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: transform 0.2s, background 0.2s;
+    }
+    .txn-row:hover {
+        background: rgba(18, 32, 76, 0.65);
+        transform: translateY(-2px);
+    }
+    .txn-left {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+    .txn-merchant {
+        font-family: 'Space Grotesk', sans-serif;
+        color: #e2e8f0;
+        font-size: 1.05rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .txn-date {
+        color: #6e84a3;
+        font-size: 0.85rem;
+    }
+    .txn-amount {
+        font-family: 'Space Grotesk', sans-serif;
+        color: #38bdf8;
+        font-size: 1.15rem;
+        font-weight: 700;
+        background: rgba(56, 189, 248, 0.1);
+        padding: 0.35rem 0.8rem;
+        border-radius: 8px;
+        border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+
     /* ── AI Advice Box ── */
     .ai-advice-box {
         background: linear-gradient(135deg,
@@ -830,13 +875,39 @@ def render_dashboard():
         with st.expander("🔍 Raw API Response"):
             st.json(data)
 
+    st.markdown("<br><br>", unsafe_allow_html=True)
+
+    # ── Recent Transactions Module ──
+    st.markdown('<div class="section-title">📋 Detaylı İşlem Geçmişi (Recent Transactions)</div>', unsafe_allow_html=True)
+    
+    transactions = data.get("transactions", [])
+    if transactions:
+        st.markdown('<div class="chart-wrap" style="padding-bottom: 1.5rem;">', unsafe_allow_html=True)
+        for txn in transactions:
+            merchant = txn.get("merchant_name", "Bilinmeyen İşlem")
+            amt = txn.get("amount", 0)
+            date = txn.get("date", "Tarih Yok")
+            icon = txn.get("icon", "💳")
+            
+            st.markdown(f"""
+            <div class="txn-row">
+              <div class="txn-left">
+                <div class="txn-merchant"><span style="font-size:1.2rem;">{icon}</span> {merchant}</div>
+                <div class="txn-date">{date}</div>
+              </div>
+              <div class="txn-amount">{format_currency(amt)}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    else:
+        st.info("ℹ️ Şu an için detaylı işlem geçmişi bulunmuyor.")
+
     # ── Footer ──
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.markdown("""
     <div style="text-align:center;color:#2a3c60;font-size:0.78rem;padding-bottom:1.5rem;">
         BudgetAI · Backend by <strong style="color:#3d5a90">Arda Bölükbaşı</strong>
-        &amp; <strong style="color:#3d5a90">Kutay Özdemir</strong>
-        · Powered by Gemini AI · Plaid · Firebase
+        &amp; Frontend by <strong style="color:#3d5a90">Kutay Özdemir & Arda Bölükbaşı</strong>
     </div>
     """, unsafe_allow_html=True)
 

@@ -263,6 +263,7 @@ async def analyze_spending(
                 "ai_advice": ai_analysis.get("advice", ""),
                 "analyzed_at": datetime.now(timezone.utc).isoformat(),
                 "data_source": data_source,
+                "transactions": expense_dicts,
             },
         }
 
@@ -309,6 +310,8 @@ def _get_category_icon(category_name: str) -> str:
         "Alışveriş": "🛒",
         "Eğlence": "🎬",
         "Sağlık": "💊",
+        "Otomatik İşlemler": "🔄",
+        "Kredi Kartı Ödeme": "💳",
         "Diğer": "📦",
     }
     return icons.get(category_name, "📦")

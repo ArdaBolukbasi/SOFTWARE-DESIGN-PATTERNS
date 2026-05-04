@@ -72,12 +72,14 @@ Bu verileri analiz ederek aşağıdaki görevleri yerine getir:
 
 ## GÖREV 1: Kategorize Etme
 Her harcamayı, firma/yer adına bakarak aşağıdaki Türkçe kategorilerden birine ata:
-- "Yeme & İçme" (restoranlar, kafeler, market gıda alımları)
+- "Yeme & İçme" (restoranlar, kafeler, fast-food zincirleri örn: McDonald's, Starbucks, KFC, gıda alımları)
 - "Ulaşım" (taksi, otobüs, benzin, otopark, uçak bileti)
 - "Fatura" (elektrik, su, internet, telefon, doğalgaz)
 - "Alışveriş" (giyim, elektronik, ev eşyası, kozmetik)
 - "Eğlence" (sinema, konser, oyun, spor, hobi)
 - "Sağlık" (eczane, doktor, hastane)
+- "Otomatik İşlemler" (otomatik fatura, abonelik ödemeleri, örn: AUTOMATIC PAYMENT)
+- "Kredi Kartı Ödeme" (kredi kartı borç ödemeleri, örn: CREDIT CARD 3333 PAYMENT)
 - "Diğer" (yukarıdakilere uymayan)
 
 ## GÖREV 2: İstatistik Hesaplama
