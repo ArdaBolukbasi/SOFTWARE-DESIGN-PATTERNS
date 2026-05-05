@@ -659,11 +659,11 @@ def render_dashboard():
         </style>
         <div class="loader-container">
             <div class="custom-spinner"></div>
-            <div class="loader-text">🤖 Gemini AI Bütçenizi Analiz Ediyor...</div>
+            <div class="loader-text">🤖 Gemini AI is analyzing your finances...</div>
             <div class="loader-subtext">
-                Banka işlemleri çekiliyor...<br>
-                Yapay Zeka ile kategorize ediliyor...<br>
-                Firebase veritabanına işleniyor...
+                Fetching bank transactions...<br>
+                Categorizing with AI...<br>
+                Saving to Firebase database...
             </div>
         </div>
         """
@@ -878,15 +878,15 @@ def render_dashboard():
     st.markdown("<br><br>", unsafe_allow_html=True)
 
     # ── Recent Transactions Module ──
-    st.markdown('<div class="section-title">📋 Detaylı İşlem Geçmişi (Recent Transactions)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">📋 Recent Transactions</div>', unsafe_allow_html=True)
     
     transactions = data.get("transactions", [])
     if transactions:
         st.markdown('<div class="chart-wrap" style="padding-bottom: 1.5rem;">', unsafe_allow_html=True)
         for txn in transactions:
-            merchant = txn.get("merchant_name", "Bilinmeyen İşlem")
+            merchant = txn.get("merchant_name", "Unknown Transaction")
             amt = txn.get("amount", 0)
-            date = txn.get("date", "Tarih Yok")
+            date = txn.get("date", "No Date")
             icon = txn.get("icon", "💳")
             
             st.markdown(f"""
@@ -900,7 +900,7 @@ def render_dashboard():
             """, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
     else:
-        st.info("ℹ️ Şu an için detaylı işlem geçmişi bulunmuyor.")
+        st.info("ℹ️ No detailed transaction history available at the moment.")
 
     # ── Footer ──
     st.markdown("<br><br>", unsafe_allow_html=True)

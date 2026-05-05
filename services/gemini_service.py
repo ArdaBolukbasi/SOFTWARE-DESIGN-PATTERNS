@@ -65,34 +65,32 @@ class GeminiService:
         transactions_json = json.dumps(transactions, ensure_ascii=False, indent=2)
 
         prompt = f"""
-Sen bir kişisel finans uzmanısın. Aşağıda bir kullanıcının banka hesabından çekilen
-harcama işlemleri listesi JSON formatında verilmiştir.
+You are a personal finance expert. Below is a list of a user's bank transactions in JSON format.
 
-Bu verileri analiz ederek aşağıdaki görevleri yerine getir:
+Analyze this data and perform the following tasks:
 
-## GÖREV 1: Kategorize Etme
-Her harcamayı, firma/yer adına bakarak aşağıdaki Türkçe kategorilerden birine ata:
-- "Yeme & İçme" (restoranlar, kafeler, fast-food zincirleri örn: McDonald's, Starbucks, KFC, gıda alımları)
-- "Ulaşım" (taksi, otobüs, benzin, otopark, uçak bileti)
-- "Fatura" (elektrik, su, internet, telefon, doğalgaz)
-- "Alışveriş" (giyim, elektronik, ev eşyası, kozmetik)
-- "Eğlence" (sinema, konser, oyun, spor, hobi)
-- "Sağlık" (eczane, doktor, hastane)
-- "Otomatik İşlemler" (otomatik fatura, abonelik ödemeleri, örn: AUTOMATIC PAYMENT)
-- "Kredi Kartı Ödeme" (kredi kartı borç ödemeleri, örn: CREDIT CARD 3333 PAYMENT)
-- "Diğer" (yukarıdakilere uymayan)
+## TASK 1: Categorization
+Categorize each transaction into exactly ONE of the following English categories, based on the merchant name:
+- "Food & Dining" (restaurants, cafes, fast-food chains e.g., McDonald's, Starbucks, KFC, groceries)
+- "Transportation" (taxi, bus, gas, parking, flights)
+- "Bills & Utilities" (electricity, water, internet, phone)
+- "Shopping" (clothing, electronics, home goods, cosmetics)
+- "Entertainment" (movies, concerts, games, sports, hobbies)
+- "Health & Wellness" (pharmacy, doctor, hospital)
+- "Auto Payments" (automatic bills, subscriptions, e.g., AUTOMATIC PAYMENT)
+- "Credit Card Payment" (credit card debt payments, e.g., CREDIT CARD 3333 PAYMENT)
+- "Other" (anything that doesn't fit above)
 
-## GÖREV 2: İstatistik Hesaplama
-- Toplam harcama tutarını hesapla.
-- Her kategorinin toplam harcama içindeki yüzdesini hesapla (virgülden sonra 1 basamak).
-- Her kategorideki işlem sayısını belirt.
+## TASK 2: Calculate Statistics
+- Calculate the total spending amount.
+- Calculate the percentage of each category out of the total spending (1 decimal place).
+- Count the number of transactions in each category.
 
-## GÖREV 3: Kişiselleştirilmiş Tavsiye
-Kullanıcının harcama alışkanlıklarını değerlendirerek yapıcı, kişiselleştirilmiş
-bir finansal tavsiye metni yaz. Tavsiye Türkçe olmalı ve şunları içermeli:
-- En çok harcama yapılan kategoriye dikkat çekmek
-- Tasarruf önerileri sunmak
-- Pozitif ve motive edici bir dil kullanmak
+## TASK 3: Personalized Advice
+Based on the user's spending habits, write a constructive, personalized financial advice text. The advice MUST BE IN ENGLISH and include:
+- Pointing out the category with the highest spending
+- Offering savings recommendations
+- Using a positive and motivating tone
 
 ## HARCAMA VERİLERİ:
 {transactions_json}

@@ -148,7 +148,7 @@ class FoodExpense(Expense):
 
     @property
     def category(self) -> str:
-        return "Yeme & İçme"
+        return "Food & Dining"
 
     @property
     def icon(self) -> str:
@@ -164,7 +164,7 @@ class TransportExpense(Expense):
 
     @property
     def category(self) -> str:
-        return "Ulaşım"
+        return "Transportation"
 
     @property
     def icon(self) -> str:
@@ -180,7 +180,7 @@ class BillExpense(Expense):
 
     @property
     def category(self) -> str:
-        return "Fatura"
+        return "Bills & Utilities"
 
     @property
     def icon(self) -> str:
@@ -196,7 +196,7 @@ class ShoppingExpense(Expense):
 
     @property
     def category(self) -> str:
-        return "Alışveriş"
+        return "Shopping"
 
     @property
     def icon(self) -> str:
@@ -212,7 +212,7 @@ class EntertainmentExpense(Expense):
 
     @property
     def category(self) -> str:
-        return "Eğlence"
+        return "Entertainment"
 
     @property
     def icon(self) -> str:
@@ -228,7 +228,7 @@ class HealthExpense(Expense):
 
     @property
     def category(self) -> str:
-        return "Sağlık"
+        return "Health & Wellness"
 
     @property
     def icon(self) -> str:
@@ -244,7 +244,7 @@ class AutoPaymentExpense(Expense):
 
     @property
     def category(self) -> str:
-        return "Otomatik İşlemler"
+        return "Auto Payments"
 
     @property
     def icon(self) -> str:
@@ -260,7 +260,7 @@ class CreditCardPaymentExpense(Expense):
 
     @property
     def category(self) -> str:
-        return "Kredi Kartı Ödeme"
+        return "Credit Card Payment"
 
     @property
     def icon(self) -> str:
@@ -276,7 +276,7 @@ class OtherExpense(Expense):
 
     @property
     def category(self) -> str:
-        return "Diğer"
+        return "Other"
 
     @property
     def icon(self) -> str:
@@ -318,56 +318,59 @@ class ExpenseFactory:
 
     # Kategori adı → Expense alt sınıfı eşleşme tablosu
     _registry: ClassVar[dict[str, type[Expense]]] = {
-        # Yeme & İçme varyasyonları
+        # Food & Dining varyasyonları
+        "food & dining": FoodExpense,
         "yeme & içme": FoodExpense,
         "yeme ve içme": FoodExpense,
         "yeme-içme": FoodExpense,
         "gıda": FoodExpense,
         "food": FoodExpense,
-        "food & drink": FoodExpense,
         "restaurant": FoodExpense,
         "restoran": FoodExpense,
-        # Ulaşım varyasyonları
+        # Transportation varyasyonları
+        "transportation": TransportExpense,
         "ulaşım": TransportExpense,
         "ulasim": TransportExpense,
         "transport": TransportExpense,
-        "transportation": TransportExpense,
         "travel": TransportExpense,
         "seyahat": TransportExpense,
-        # Fatura varyasyonları
+        # Bills & Utilities varyasyonları
+        "bills & utilities": BillExpense,
         "fatura": BillExpense,
         "faturalar": BillExpense,
         "bills": BillExpense,
         "utilities": BillExpense,
-        # Alışveriş varyasyonları
+        # Shopping varyasyonları
+        "shopping": ShoppingExpense,
         "alışveriş": ShoppingExpense,
         "alisveris": ShoppingExpense,
-        "shopping": ShoppingExpense,
         "giyim": ShoppingExpense,
-        # Eğlence varyasyonları
+        # Entertainment varyasyonları
+        "entertainment": EntertainmentExpense,
         "eğlence": EntertainmentExpense,
         "eglence": EntertainmentExpense,
-        "entertainment": EntertainmentExpense,
-        # Sağlık varyasyonları
+        # Health & Wellness varyasyonları
+        "health & wellness": HealthExpense,
         "sağlık": HealthExpense,
         "saglik": HealthExpense,
         "health": HealthExpense,
-        # Otomatik İşlemler varyasyonları
+        # Auto Payments varyasyonları
+        "auto payments": AutoPaymentExpense,
         "otomatik işlemler": AutoPaymentExpense,
         "otomatik islemler": AutoPaymentExpense,
         "otomatik ödeme": AutoPaymentExpense,
         "otomatik odeme": AutoPaymentExpense,
         "automatic payment": AutoPaymentExpense,
-        # Kredi Kartı Ödeme varyasyonları
+        # Credit Card Payment varyasyonları
+        "credit card payment": CreditCardPaymentExpense,
         "kredi kartı ödeme": CreditCardPaymentExpense,
         "kredi karti odeme": CreditCardPaymentExpense,
         "kredi kartı": CreditCardPaymentExpense,
-        "credit card payment": CreditCardPaymentExpense,
         "credit card": CreditCardPaymentExpense,
-        # Diğer
+        # Other
+        "other": OtherExpense,
         "diğer": OtherExpense,
         "diger": OtherExpense,
-        "other": OtherExpense,
     }
 
     @classmethod

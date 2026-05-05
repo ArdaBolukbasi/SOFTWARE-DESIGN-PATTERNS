@@ -304,15 +304,15 @@ def _get_category_icon(category_name: str) -> str:
         str: Kategoriyi temsil eden emoji.
     """
     icons = {
-        "Yeme & İçme": "🍔",
-        "Ulaşım": "🚗",
-        "Fatura": "📄",
-        "Alışveriş": "🛒",
-        "Eğlence": "🎬",
-        "Sağlık": "💊",
-        "Otomatik İşlemler": "🔄",
-        "Kredi Kartı Ödeme": "💳",
-        "Diğer": "📦",
+        "Food & Dining": "🍔",
+        "Transportation": "🚗",
+        "Bills & Utilities": "📄",
+        "Shopping": "🛒",
+        "Entertainment": "🎬",
+        "Health & Wellness": "💊",
+        "Auto Payments": "🔄",
+        "Credit Card Payment": "💳",
+        "Other": "📦",
     }
     return icons.get(category_name, "📦")
 
