@@ -1,4 +1,4 @@
-# 🏦 AI Budget Tracker — Backend API
+# 🏦 BudgerAI — Backend API
 
 Yapay zeka destekli kişisel finans analiz platformu. Banka harcamalarını otomatik kategorize eder, istatistik hesaplar ve kişiselleştirilmiş Türkçe finansal tavsiye üretir.
 

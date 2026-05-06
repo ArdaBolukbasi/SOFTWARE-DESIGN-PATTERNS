@@ -42,7 +42,7 @@ class Settings:
     )
 
     # --- Uygulama ---
-    APP_NAME: str = "AI Budget Tracker"
+    APP_NAME: str = "BudgerAI"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
 

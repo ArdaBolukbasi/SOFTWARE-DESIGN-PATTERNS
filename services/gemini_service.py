@@ -164,15 +164,38 @@ Yanıtını MUTLAKA aşağıdaki JSON formatında ver, başka hiçbir metin ekle
 
         print(f"🤖 Gemini AI'ya {len(transactions)} işlem gönderiliyor...")
 
-        # Gemini'ye istek gönder — JSON çıktı formatı zorunlu kıl
-        response = self._client.models.generate_content(
-            model=self._model,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                temperature=0.3,  # Düşük sıcaklık → daha tutarlı çıktı
-            ),
-        )
+        import time
+        max_retries = 3
+        base_delay = 2
+
+        for attempt in range(max_retries):
+            try:
+                # Gemini'ye istek gönder — JSON çıktı formatı zorunlu kıl
+                response = self._client.models.generate_content(
+                    model=self._model,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        temperature=0.3,  # Düşük sıcaklık → daha tutarlı çıktı
+                    ),
+                )
+                break  # İstek başarılı olursa döngüden çık
+            except Exception as e:
+                error_str = str(e)
+                # 503 (Service Unavailable) veya 429 (Too Many Requests) kontrolü
+                if "503" in error_str or "UNAVAILABLE" in error_str or "429" in error_str or "high demand" in error_str.lower():
+                    if attempt < max_retries - 1:
+                        delay = base_delay * (2 ** attempt)
+                        print(f"⚠️  Gemini API yoğun (Deneme {attempt+1}/{max_retries}). {delay} saniye bekleniyor...")
+                        time.sleep(delay)
+                    else:
+                        print(f"❌ Gemini API'ye ulaşılamadı (Max deneme: {max_retries}): {e}")
+                        print("    Yedek analiz (fallback) devreye giriyor...")
+                        return self._fallback_analysis(transactions)
+                else:
+                    print(f"❌ Gemini API beklenmeyen hata: {e}")
+                    print("    Yedek analiz (fallback) devreye giriyor...")
+                    return self._fallback_analysis(transactions)
 
         # Yanıtı parse et
         try:

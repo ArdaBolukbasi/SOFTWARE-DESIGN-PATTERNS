@@ -101,21 +101,33 @@ async def register_user(payload: RegisterUserRequest) -> dict[str, Any]:
                 },
             )
 
-        # Kullanıcının zaten var olup olmadığını kontrol et
+        # Kullanıcının ID ile zaten var olup olmadığını kontrol et
         existing_user = firebase_db.get_document("users", user_id)
 
         if existing_user:
-            # Kullanıcı zaten kayıtlı — 200 OK dön
-            print(f"   ℹ️  Kullanıcı zaten kayıtlı: {user_id}")
-            return {
-                "status": "already_exists",
-                "message": "Kullanıcı zaten kayıtlı.",
-                "data": {
-                    "user_id": user_id,
-                    "display_name": existing_user.get("display_name", ""),
-                    "registered_at": existing_user.get("registered_at", ""),
-                },
-            }
+            raise HTTPException(
+                status_code=400,
+                detail="Bu User ID zaten kullanılıyor. Lütfen başka bir tane seçin."
+            )
+            
+        # Display name ve email benzersizliğini kontrol et
+        users_ref = firebase_db.client.collection("users")
+        
+        if payload.display_name:
+            name_query = users_ref.where("display_name", "==", payload.display_name).limit(1).get()
+            if len(name_query) > 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Bu isim (Display Name) zaten kullanılıyor. Lütfen başka bir isim girin."
+                )
+                
+        if payload.email:
+            email_query = users_ref.where("email", "==", payload.email).limit(1).get()
+            if len(email_query) > 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Bu e-posta adresi zaten kullanılıyor. Lütfen başka bir e-posta girin."
+                )
 
         # Yeni kullanıcı dökümanı oluştur
         user_data = {
@@ -144,4 +156,42 @@ async def register_user(payload: RegisterUserRequest) -> dict[str, Any]:
                 "status": "error",
                 "message": f"Kullanıcı kaydı sırasında hata: {str(e)}",
             },
+        )
+
+
+@router.get("/user/{user_id}")
+async def get_user(user_id: str) -> dict[str, Any]:
+    """
+    Belirli bir kullanıcının var olup olmadığını kontrol eder.
+    Login (Giriş) işlemi için kullanılır.
+    """
+    try:
+        firebase_db = FirebaseDB()
+
+        if not firebase_db.is_connected:
+            raise HTTPException(
+                status_code=500,
+                detail="Firebase bağlantısı kurulamadı.",
+            )
+
+        existing_user = firebase_db.get_document("users", user_id)
+
+        if not existing_user:
+            raise HTTPException(
+                status_code=404,
+                detail="Böyle bir hesap bulunamadı.",
+            )
+
+        return {
+            "status": "success",
+            "data": existing_user,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"   ❌ Kullanıcı kontrol hatası: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Kullanıcı kontrolü sırasında hata: {str(e)}",
         )

@@ -148,8 +148,8 @@ async def startup_event() -> None:
     """
     banner = """
     ╔══════════════════════════════════════════════════════╗
-    ║          🏦  AI BUDGET TRACKER  🏦                  ║
-    ║          Yapay Zeka Destekli Finans API              ║
+    ║                🏦  BudgerAI  🏦                       ║
+    ║          AI Powered Finance API                      ║
     ╠══════════════════════════════════════════════════════╣
     ║  Framework  : FastAPI                                ║
     ║  Database   : Firebase Firestore (Singleton)         ║

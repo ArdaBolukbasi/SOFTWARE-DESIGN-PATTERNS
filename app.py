@@ -1,6 +1,7 @@
 """
-AI Budget Tracker — Streamlit Frontend
-Backend by Arda Bölükbaşı & Kutay Özdemir
+BudgerAI — 
+Backend by Arda Bölükbaşı
+Frontend by Arda Bölükbaşı & Kutay Özdemir
 Run: streamlit run app.py
 """
 
@@ -11,7 +12,7 @@ import time
 
 # ─── Page Config ──────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="BudgetAI · Tracker",
+    page_title="BudgerAI · Tracker",
     page_icon="💎",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -143,6 +144,30 @@ def api_register(user_id: str, display_name: str, email: str):
     except requests.exceptions.ConnectionError:
         return None, "Cannot reach the backend. Is FastAPI running?"
     except requests.exceptions.HTTPError as e:
+        try:
+            err_json = e.response.json()
+            if "detail" in err_json:
+                return None, err_json["detail"]
+            return None, f"HTTP {e.response.status_code}: {e.response.text}"
+        except ValueError:
+            return None, f"HTTP {e.response.status_code}: {e.response.text}"
+    except Exception as e:
+        return None, str(e)
+
+
+def api_login(user_id: str):
+    try:
+        r = requests.get(
+            f"{API_BASE}/api/user/{user_id}",
+            timeout=10,
+        )
+        if r.status_code == 404:
+            return None, "Böyle bir hesap bulunamadı. Lütfen önce 'Create Account' sekmesinden kayıt olun."
+        r.raise_for_status()
+        return r.json(), None
+    except requests.exceptions.ConnectionError:
+        return None, "Cannot reach the backend. Is FastAPI running?"
+    except requests.exceptions.HTTPError as e:
         return None, f"HTTP {e.response.status_code}: {e.response.text}"
     except Exception as e:
         return None, str(e)
@@ -245,8 +270,8 @@ def render_login():
     with center:
         st.markdown("""
         <div class="login-card">
-          <div class="login-logo">💎 BudgetAI</div>
-          <div class="login-tagline">Powered by Gemini · Plaid · Firebase</div>
+          <div class="login-logo">💎 BudgerAI</div>
+          <div class="login-tagline">AI Powered Finance API</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -264,11 +289,16 @@ def render_login():
                     if not uid.strip():
                         st.error("Please enter your User ID.")
                     else:
-                        st.session_state.user_id = uid.strip()
-                        st.session_state.display_name = uid.strip()
-                        st.session_state.authenticated = True
-                        st.session_state.view = "dashboard"
-                        st.rerun()
+                        with st.spinner("Signing in…"):
+                            data, err = api_login(uid.strip())
+                        if err:
+                            st.error(f"❌ {err}")
+                        else:
+                            st.session_state.user_id = uid.strip()
+                            st.session_state.display_name = data.get("data", {}).get("display_name") or uid.strip()
+                            st.session_state.authenticated = True
+                            st.session_state.view = "dashboard"
+                            st.rerun()
 
         # ── REGISTER ──
         with tab2:
@@ -692,7 +722,7 @@ def render_dashboard():
 
     col_logo, col_user, col_logout = st.columns([3, 4, 1])
     with col_logo:
-        st.markdown('<div class="topbar-logo">💎 BudgetAI</div>', unsafe_allow_html=True)
+        st.markdown('<div class="topbar-logo">💎 BudgerAI</div>', unsafe_allow_html=True)
     with col_user:
         st.markdown(f"""
         <div class="topbar-user" style="justify-content:flex-end;padding-top:.5rem;">
@@ -702,7 +732,12 @@ def render_dashboard():
     with col_logout:
         if st.button("Sign Out", type="secondary", use_container_width=True):
             for k in ["authenticated", "user_id", "display_name", "dashboard_data"]:
-                st.session_state[k] = False if k == "authenticated" else ""
+                if k == "authenticated":
+                    st.session_state[k] = False
+                elif k == "dashboard_data":
+                    st.session_state[k] = None
+                else:
+                    st.session_state[k] = ""
             st.session_state.view = "login"
             st.rerun()
 
@@ -728,9 +763,9 @@ def render_dashboard():
     if src in ("sandbox", "plaid_sandbox", "mock"):
         st.markdown("""
         <div class="sandbox-banner">
-          <div class="sandbox-icon">⚠️</div>
+          <div class="sandbox-icon">✅</div>
           <div>
-            <div class="sandbox-text">SANDBOX MODE ACTIVE — Mock Data</div>
+            <div class="sandbox-text">SANDBOX MODE ACTIVE</div>
             <div class="sandbox-sub">Connect a real bank account via Plaid to see live transactions.</div>
           </div>
         </div>
@@ -906,7 +941,7 @@ def render_dashboard():
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.markdown("""
     <div style="text-align:center;color:#2a3c60;font-size:0.78rem;padding-bottom:1.5rem;">
-        BudgetAI · Backend by <strong style="color:#3d5a90">Arda Bölükbaşı</strong>
+        BudgerAI · Backend by <strong style="color:#3d5a90">Arda Bölükbaşı</strong>
         &amp; Frontend by <strong style="color:#3d5a90">Kutay Özdemir & Arda Bölükbaşı</strong>
     </div>
     """, unsafe_allow_html=True)
