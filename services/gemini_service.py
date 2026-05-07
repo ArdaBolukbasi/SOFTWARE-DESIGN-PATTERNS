@@ -5,10 +5,10 @@ Bu modül, Plaid'den çekilen ham banka işlem verilerini Google Gemini
 yapay zeka modeline gönderip akıllı finansal analiz yaptırır.
 
 Gemini API'den İstenen Görevler:
-    1. Harcamaları firma adına göre Türkçe kategorilere ayırmak
+    1. Harcamaları firma adına göre kategorilere ayırmak
     2. Toplam harcamayı hesaplamak
     3. Her kategorinin toplam harcama içindeki yüzdesini bulmak
-    4. Kişiselleştirilmiş Türkçe finansal tavsiye üretmek
+    4. Kişiselleştirilmiş  finansal tavsiye üretmek
 
 Kullanım:
     from services.gemini_service import GeminiService
@@ -28,40 +28,12 @@ from config import settings
 
 
 class GeminiService:
-    """
-    Google Gemini AI ile harcama analizi yapan servis sınıfı.
-
-    Ham banka işlem verilerini alır, yapılandırılmış bir prompt ile
-    Gemini modeline gönderir ve kategorize edilmiş analiz sonucu döner.
-
-    Attributes:
-        _client: Google GenAI istemcisi.
-        _model: Kullanılacak Gemini model adı.
-    """
-
+ 
     def __init__(self) -> None:
-        """
-        Gemini API istemcisini yapılandırır.
-
-        API anahtarı config.py'deki GEMINI_API_KEY değişkeninden okunur.
-        """
         self._client = genai.Client(api_key=settings.GEMINI_API_KEY)
         self._model = settings.GEMINI_MODEL
 
     def _build_prompt(self, transactions: list[dict]) -> str:
-        """
-        Gemini'ye gönderilecek analiz promptunu oluşturur.
-
-        Prompt, Gemini'den yapılandırılmış JSON çıktı üretmesini
-        ve Türkçe finansal tavsiye yazmasını ister.
-
-        Args:
-            transactions: Plaid'den çekilen ham işlem listesi.
-                Her işlem: {"name", "merchant_name", "amount", "date", "category"}
-
-        Returns:
-            str: Gemini'ye gönderilecek tam prompt metni.
-        """
         transactions_json = json.dumps(transactions, ensure_ascii=False, indent=2)
 
         prompt = f"""
@@ -116,7 +88,7 @@ Yanıtını MUTLAKA aşağıdaki JSON formatında ver, başka hiçbir metin ekle
             ]
         }}
     ],
-    "advice": "<turkce_tavsiye_metni>"
+    "advice": "<english_advice_text>"
 }}
 """
         return prompt
@@ -215,12 +187,6 @@ Yanıtını MUTLAKA aşağıdaki JSON formatında ver, başka hiçbir metin ekle
 
         Kategorilendirme yapılmaz, sadece toplam hesaplanır ve
         tüm işlemler "Diğer" kategorisine atılır.
-
-        Args:
-            transactions: İşlem listesi.
-
-        Returns:
-            dict: Basitleştirilmiş analiz sonucu.
         """
         total = sum(txn.get("amount", 0) for txn in transactions)
         return {

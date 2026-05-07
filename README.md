@@ -268,3 +268,190 @@ Sunucu çalışırken:
 **Arda Bölükbaşı**
 
 Software Design Patterns — Akademik Proje
+
+---
+
+## 📊 UML Diagramları (UML Diagrams)
+
+Projenin mimarisini ve akışını gösteren UML diyagramları aşağıdadır. Bu diyagramlar akademik proje raporunda kullanılması amacıyla tasarlanmıştır. GitHub Markdown yapısı gereği bu diyagramlar projeye girildiğinde otomatik olarak görsellere dönüşecektir.
+
+### 1. Class Diagram (Sınıf Diyagramı)
+```mermaid
+classDiagram
+    class FirebaseDB {
+        <<Singleton>>
+        - _instance : FirebaseDB
+        - _db : firestore.Client
+        + __new__()
+        + save_document()
+        + get_document()
+    }
+    class PlaidService {
+        - _client
+        - _access_token
+        + get_transactions(period)
+        - _get_fallback_transactions()
+    }
+    class GeminiService {
+        - client : genai.Client
+        + analyze_spending(transactions)
+        - _fallback_analysis()
+    }
+    class ExpenseFactory {
+        <<Factory>>
+        + create_expense(category, data) Expense
+    }
+    class Expense {
+        <<Abstract>>
+        + amount: float
+        + date: str
+        + calculate_impact()
+    }
+    class FoodExpense
+    class TransportExpense
+
+    Expense <|-- FoodExpense
+    Expense <|-- TransportExpense
+    ExpenseFactory ..> Expense : creates
+    FirebaseDB <-- PlaidService : uses (token storage)
+```
+
+### 2. Use Case Diagram (Kullanım Senaryosu)
+```mermaid
+flowchart LR
+    User([User])
+    
+    SignIn(Sign In / Register)
+    ViewDash(View Dashboard)
+    RefreshData(Refresh Bank Data)
+    GetAdvice(Get AI Advice)
+    
+    User --> SignIn
+    User --> ViewDash
+    User --> RefreshData
+    User --> GetAdvice
+    
+    SignIn -.-> |includes| VerifyUser(Verify with Firebase)
+    RefreshData -.-> |includes| FetchPlaid(Fetch from Plaid API)
+    GetAdvice -.-> |includes| AskGemini(Analyze via Gemini API)
+```
+
+### 3. Sequence Diagram (Sıralama Diyagramı)
+```mermaid
+sequenceDiagram
+    actor User
+    participant Frontend as Streamlit UI
+    participant Backend as FastAPI Router
+    participant Plaid as Plaid API
+    participant AI as Gemini API
+    participant DB as Firebase DB
+
+    User->>Frontend: Clicks "Refresh Analysis"
+    Frontend->>Backend: GET /api/analyze-spending
+    Backend->>DB: Check User existence
+    DB-->>Backend: User found
+    Backend->>Plaid: get_transactions()
+    Plaid-->>Backend: Returns Raw Transactions
+    Backend->>AI: analyze_spending(raw_transactions)
+    AI-->>Backend: Returns JSON Analysis (Categories & Advice)
+    Backend->>Backend: ExpenseFactory maps data to Objects
+    Backend->>DB: save_document(users/{uid}/expenses)
+    DB-->>Backend: Success ACK
+    Backend-->>Frontend: HTTP 200 OK (JSON Data)
+    Frontend-->>User: Renders Dashboard & Charts
+```
+
+### 4. Component Diagram (Bileşen Diyagramı)
+```mermaid
+flowchart TB
+    subgraph Client Tier
+        UI[Streamlit Frontend App]
+    end
+
+    subgraph Application Tier
+        API[FastAPI REST API]
+        Router[Controllers / Routers]
+        Services[Business Logic Services]
+        Factory[Model Factory]
+        
+        API --> Router
+        Router --> Services
+        Router --> Factory
+    end
+
+    subgraph Data Tier
+        DB[(Firebase Firestore NoSQL)]
+    end
+
+    subgraph External APIs
+        Plaid[Plaid Banking API]
+        Gemini[Google Gemini LLM]
+    end
+
+    UI -- HTTP REST --> API
+    Services -- HTTPS --> Plaid
+    Services -- HTTPS --> Gemini
+    Services -- Firebase SDK --> DB
+```
+
+### 5. Communication Diagram (İletişim Diyagramı)
+```mermaid
+flowchart TD
+    UI["1: UI Dashboard"] -->|"1.1: GET /analyze-spending"| Router["2: SpendingRouter"]
+    Router -->|"1.2: get_transactions()"| PlaidSvc["3: PlaidService"]
+    PlaidSvc -.->|"1.3: Returns Data"| Router
+    Router -->|"1.4: analyze_spending()"| GeminiSvc["4: GeminiService"]
+    GeminiSvc -.->|"1.5: Returns JSON"| Router
+    Router -->|"1.6: create_expense()"| Factory["5: ExpenseFactory"]
+    Router -->|"1.7: save_document()"| DB["6: FirebaseDB"]
+    DB -.->|"1.8: ACK"| Router
+    Router -.->|"1.9: HTTP 200"| UI
+```
+
+### 6. Object Diagram (Nesne Diyagramı)
+```mermaid
+classDiagram
+    class UserDocument {
+        user_id = "arda123"
+        display_name = "Arda Bölükbaşı"
+        plaid_access_token = "access-sandbox-xxx"
+    }
+    class DBInstance {
+        _initialized = True
+        _db = FirestoreClient
+    }
+    class FoodExpense {
+        name = "Starbucks"
+        amount = 145.50
+        category = "Food and Drink"
+    }
+    class TransportExpense {
+        name = "Uber"
+        amount = 67.80
+        category = "Transportation"
+    }
+
+    UserDocument --> FoodExpense : owns
+    UserDocument --> TransportExpense : owns
+    DBInstance ..> UserDocument : manages
+```
+
+### 7. State Machine Diagram (Durum Makinesi)
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> VerifyingUser : User Requests Analysis
+    VerifyingUser --> FetchingBankData : User Verified
+    VerifyingUser --> Idle : User Not Found (HTTP 404)
+    
+    FetchingBankData --> AnalyzingData : Transactions Retrieved
+    FetchingBankData --> FallbackMockData : Plaid API Failed
+    FallbackMockData --> AnalyzingData : Mock Transactions Ready
+    
+    AnalyzingData --> SavingToDatabase : Gemini Returns JSON
+    AnalyzingData --> FallbackAnalysis : Gemini 503 Error / Timeout
+    FallbackAnalysis --> SavingToDatabase : Basic Stats Computed
+    
+    SavingToDatabase --> Completed : Firestore Save Success
+    Completed --> [*] : Response Sent to UI
+```

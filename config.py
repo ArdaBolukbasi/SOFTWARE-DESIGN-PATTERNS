@@ -12,8 +12,6 @@ Kullanım:
 import os
 from dataclasses import dataclass
 from dotenv import load_dotenv
-
-# .env dosyasını yükle (proje kök dizininden)
 load_dotenv()
 
 

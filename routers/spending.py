@@ -96,29 +96,16 @@ async def analyze_spending(
                 print(f"   ✅ Kullanıcı bulundu: {user_id}")
                 print(f"   📋 Kayıt tarihi: {user_doc.get('registered_at', 'bilinmiyor')}")
             else:
-                # Kullanıcı kayıtlı değilse otomatik oluştur
-                print(f"   ℹ️  Kullanıcı bulunamadı, otomatik kayıt oluşturuluyor...")
-                firebase_db.save_document(
-                    "users",
-                    {
-                        "user_id": user_id,
-                        "display_name": "",
-                        "email": "",
-                        "registered_at": datetime.now(timezone.utc).isoformat(),
-                    },
-                    document_id=user_id,
+                # Kullanıcı yoksa işlemi durdur ve 404 hatası dön
+                print(f"   ❌ Kullanıcı bulunamadı: {user_id}")
+                raise HTTPException(
+                    status_code=404,
+                    detail="Böyle bir hesap bulunamadı. Lütfen önce 'Create Account' sekmesinden kayıt olun."
                 )
-                print(f"   ✅ Kullanıcı otomatik kaydedildi: {user_id}")
         else:
             print("   ⚠️  Firebase bağlantısı yok, kullanıcı doğrulama atlandı.")
 
-        # ============================================================
         # ADIM 1: Plaid Sandbox'tan Banka Verisi Çekme
-        # ============================================================
-        # Her zaman önce Plaid Sandbox API'yi dene.
-        # Sandbox token otomatik oluşturulur, gerçek sandbox verileri çekilir.
-        # Sadece Plaid boş dönerse mock data devreye girer (güvenlik ağı).
-        # ============================================================
         print(f"\n📥 ADIM 1: Plaid Sandbox API'den banka işlemleri çekiliyor...")
 
         plaid_service = PlaidService()
@@ -134,17 +121,13 @@ async def analyze_spending(
 
         print(f"   📊 Toplam {len(raw_transactions)} işlem hazır.")
 
-        # ============================================================
         # ADIM 2: Gemini AI ile Analiz
-        # ============================================================
         print("\n🤖 ADIM 2: Gemini AI ile harcamalar analiz ediliyor...")
 
         gemini_service = GeminiService()
         ai_analysis = gemini_service.analyze_spending(raw_transactions)
 
-        # ============================================================
         # ADIM 3: Factory Pattern ile Nesne Üretimi
-        # ============================================================
         print("\n🏭 ADIM 3: Factory Pattern ile Expense nesneleri üretiliyor...")
         print(f"   ℹ️  Gemini {len(ai_analysis.get('categories', []))} kategori döndürdü.")
 

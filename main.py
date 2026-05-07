@@ -1,40 +1,9 @@
 """
-main.py — AI Budget Tracker FastAPI Uygulama Giriş Noktası
-==============================================================
-Bu dosya, uygulamanın ana giriş noktasıdır. FastAPI uygulamasını
-oluşturur, CORS middleware'ini yapılandırır ve router'ları dahil eder.
-
 Çalıştırma:
     uvicorn main:app --reload
-
+    source venv/bin/activate
 Swagger UI:
     http://localhost:8000/docs
-
-ReDoc:
-    http://localhost:8000/redoc
-
-Mimari Özet:
-    ┌─────────────────────────────────────────────────────────────┐
-    │                      main.py (FastAPI)                      │
-    │                                                             │
-    │  ┌─────────────────┐     ┌──────────────────────────────┐  │
-    │  │ /health          │     │ /api/analyze-spending        │  │
-    │  │ Health Check     │     │ Ana Pipeline Endpoint'i      │  │
-    │  └─────────────────┘     └──────────┬───────────────────┘  │
-    │                                      │                      │
-    │              ┌───────────────────────┼──────────────┐       │
-    │              ▼                       ▼              ▼       │
-    │  ┌──────────────────┐  ┌───────────────┐  ┌────────────┐  │
-    │  │  PlaidService     │  │ GeminiService │  │ FirebaseDB │  │
-    │  │  (Banka Verisi)   │  │ (AI Analiz)   │  │ (Singleton)│  │
-    │  └──────────────────┘  └───────────────┘  └────────────┘  │
-    │                              │                              │
-    │                              ▼                              │
-    │                   ┌──────────────────┐                     │
-    │                   │  ExpenseFactory   │                     │
-    │                   │  (Factory Pattern)│                     │
-    │                   └──────────────────┘                     │
-    └─────────────────────────────────────────────────────────────┘
 """
 
 from datetime import datetime, timezone
@@ -45,10 +14,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import settings
 from routers.spending import router as spending_router
 from routers.user import router as user_router
-
-# ============================================================
-# FastAPI Uygulama Oluşturma
-# ============================================================
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -64,12 +29,6 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
-# ============================================================
-# CORS Middleware — Frontend erişimi için
-# ============================================================
-# Frontend farklı bir port/domain'de çalıştığı için CORS gerekli.
-# Geliştirme ortamında tüm originlere izin verilir.
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],           # Tüm originlere izin ver (geliştirme)
@@ -77,18 +36,8 @@ app.add_middleware(
     allow_methods=["*"],           # Tüm HTTP metotlarına izin ver
     allow_headers=["*"],           # Tüm header'lara izin ver
 )
-
-# ============================================================
-# Router'ları Dahil Et
-# ============================================================
-
 app.include_router(spending_router)
 app.include_router(user_router)
-
-# ============================================================
-# Kök (Root) Endpoint'ler
-# ============================================================
-
 
 @app.get("/", tags=["Root"])
 async def root() -> dict:
@@ -134,10 +83,6 @@ async def health_check() -> dict:
     }
 
 
-# ============================================================
-# Uygulama Başlangıç/Bitiş Olayları
-# ============================================================
-
 
 @app.on_event("startup")
 async def startup_event() -> None:
@@ -148,17 +93,16 @@ async def startup_event() -> None:
     """
     banner = """
     ╔══════════════════════════════════════════════════════╗
-    ║                🏦  BudgerAI  🏦                       ║
+    ║                🏦  BudgerAI  🏦                      ║
     ║          AI Powered Finance API                      ║
     ╠══════════════════════════════════════════════════════╣
     ║  Framework  : FastAPI                                ║
     ║  Database   : Firebase Firestore (Singleton)         ║
     ║  Bank API   : Plaid Sandbox                          ║
     ║  AI Engine  : Google Gemini                          ║
-    ║  Patterns   : Singleton + Factory                    ║
     ╠══════════════════════════════════════════════════════╣
-    ║  Swagger UI : http://localhost:8000/docs              ║
-    ║  ReDoc      : http://localhost:8000/redoc             ║
+    ║  Swagger UI : http://localhost:8000/docs             ║
+    ║  ReDoc      : http://localhost:8000/redoc            ║
     ╚══════════════════════════════════════════════════════╝
     """
     print(banner)

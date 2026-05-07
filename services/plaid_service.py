@@ -4,11 +4,6 @@ plaid_service.py — Plaid Sandbox API Entegrasyonu
 Bu modül, Plaid Sandbox ortamına bağlanarak kullanıcının banka
 işlemlerini (transaction) çeker.
 
-Sandbox Modu:
-- Gerçek banka hesabı gerekmez.
-- Plaid'in test verileri (sahte işlemler) kullanılır.
-- institution_id: "ins_109508" (Sandbox test bankası)
-
 Akış:
     1. sandbox/public_token/create → Test public token üretilir
     2. item/public_token/exchange → Access token'a çevrilir
@@ -45,18 +40,6 @@ from config import settings
 
 
 class PlaidService:
-    """
-    Plaid API ile banka işlemlerini çeken servis sınıfı.
-
-    Sandbox ortamında çalışarak gerçekçi test verileri sağlar.
-    Frontend entegrasyonu gerekmeden doğrudan API üzerinden
-    token oluşturma ve işlem çekme işlemlerini yönetir.
-
-    Attributes:
-        _client: Plaid API istemcisi.
-        _access_token: Sandbox erişim token'ı (lazy initialization).
-        _is_sandbox_mode: Sandbox/mock modunda mı çalışıyor.
-    """
 
     # Sandbox test bankası institution ID'si
     SANDBOX_INSTITUTION_ID = "ins_109508"
@@ -87,6 +70,8 @@ class PlaidService:
         """Sandbox (mock) modunda mı çalışıyor."""
         return self._is_sandbox_mode
 
+    #eğer pailde bağlanmamışsa mock veri kualnır
+    
     def get_mock_transactions(self) -> list[dict[str, Any]]:
         """
         Sandbox mock verileri döner — access_token olmadan çalışır.
@@ -103,16 +88,9 @@ class PlaidService:
         print(f"📊 {len(mock_data)} sahte işlem üretildi.")
         return mock_data
 
+        #sandaboxdan token üretir
     def _create_sandbox_token(self) -> str:
-        """
-        Sandbox ortamında test amaçlı bir public token oluşturur.
-
-        Bu token, gerçek bir kullanıcının Plaid Link üzerinden
-        banka hesabını bağlamasını simüle eder.
-
-        Returns:
-            str: Sandbox public token.
-        """
+      
         request = SandboxPublicTokenCreateRequest(
             institution_id=self.SANDBOX_INSTITUTION_ID,
             initial_products=[Products("transactions")],
@@ -150,6 +128,7 @@ class PlaidService:
             self._access_token = self._exchange_token(public_token)
             print("✅ Plaid access token başarıyla alındı.")
 
+        #sahtee veriler eğer bağlanmazsa
     def _get_fallback_transactions(self) -> list[dict[str, Any]]:
         """
         Güvenlik Ağı (Fallback) — Plaid boş döndüğünde devreye giren sahte veri.
@@ -206,36 +185,9 @@ class PlaidService:
                 "category": ["Shopping", "Personal Care"],
             },
         ]
-
+    # aylık veya haftalık veri çeker
     def get_transactions(self, period: str = "month") -> list[dict[str, Any]]:
-        """
-        Belirtilen döneme ait banka işlemlerini Plaid'den çeker.
-
-        Plaid Transactions Get API (/transactions/get) kullanılarak
-        belirli bir tarih aralığındaki işlemler çekilir. Bu endpoint,
-        Sandbox ortamında historical (geçmiş) test verilerini döner.
-
-        NOT: Eski /transactions/sync endpoint'i yeni oluşturulan
-        sandbox hesaplarında boş liste döndürüyordu. /transactions/get
-        ise start_date/end_date parametreleri ile geçmiş verileri
-        zorla çekebilir.
-
-        Güvenlik Ağı: Plaid boş liste döndürürse veya bir hata oluşursa,
-        otomatik olarak sahte (mock) veriler devreye girer.
-
-        Args:
-            period: İşlem dönemi. "week" (son 7 gün) veya "month" (son 30 gün).
-
-        Returns:
-            list[dict]: İşlem listesi. Her işlem şu formatta:
-                {
-                    "name": "Starbucks",
-                    "merchant_name": "Starbucks",
-                    "amount": 4.50,
-                    "date": "2026-04-28",
-                    "category": ["Food and Drink", "Restaurants"]
-                }
-        """
+       
         processed = []
 
         try:

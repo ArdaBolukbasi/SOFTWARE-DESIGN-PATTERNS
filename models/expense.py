@@ -1,43 +1,11 @@
 """
-expense.py — Factory Pattern ile Harcama Nesneleri
-=====================================================
-🔷 DESIGN PATTERN: FACTORY
 
-Bu modül, Plaid'den çekilen ve Gemini AI tarafından kategorize edilen
-harcama verilerini OOP nesnelerine dönüştüren Factory Pattern'i içerir.
+plaiden gelen verileri ai ile analiz edip kategroielre böler
+gemini bu ürün yeme içme der 
+api ExpenseFactory.create() gider ve bunu nesneye dönüştürür
+_registry isimli listeye bakılır ordan  yeme içme gelirse food expesnse olur der orda liste var
+ordanda foodeexpense nesnesini database kaydeder
 
-Neden Factory Pattern?
------------------------
-- Gemini AI'dan gelen kategori bilgisine göre doğru sınıf otomatik üretilir.
-- İstemci kodu (router) hangi sınıfın üretileceğini bilmek zorunda kalmaz.
-- Yeni kategori eklemek için sadece yeni bir sınıf ve registry kaydı yeterlidir.
-- Her kategori kendi özel davranışlarını (ikon, açıklama) taşıyabilir.
-
-Yapı:
-    Expense (Base Class)
-    ├── FoodExpense        → Yeme & İçme
-    ├── TransportExpense   → Ulaşım
-    ├── BillExpense        → Fatura
-    ├── ShoppingExpense    → Alışveriş
-    ├── EntertainmentExpense → Eğlence
-    ├── HealthExpense      → Sağlık
-    └── OtherExpense       → Diğer
-
-    ExpenseFactory.create("Yeme & İçme", ...) → FoodExpense(...)
-
-Kullanım:
-    from models.expense import ExpenseFactory
-
-    expense = ExpenseFactory.create(
-        category="Yeme & İçme",
-        merchant_name="Starbucks",
-        amount=45.50,
-        date="2026-05-01",
-        original_description="STARBUCKS COFFEE"
-    )
-
-    print(expense.to_dict())    # Firestore'a kaydedilebilir sözlük
-    print(expense.icon)         # 🍔
 """
 
 from __future__ import annotations
@@ -48,16 +16,9 @@ from datetime import datetime
 from typing import ClassVar
 
 
-# ============================================================
-# BASE CLASS — Tüm harcama türlerinin ortak atasıdır
-# ============================================================
-
-
 @dataclass
 class Expense(ABC):
     """
-    Tüm harcama türlerinin temel (abstract) sınıfı.
-
     Bu sınıf doğrudan örneklenemez; alt sınıflar (FoodExpense,
     TransportExpense vb.) tarafından genişletilir.
 
@@ -134,9 +95,6 @@ class Expense(ABC):
         }
 
 
-# ============================================================
-# CONCRETE CLASSES — Somut Harcama Türleri
-# ============================================================
 
 
 @dataclass

@@ -17,7 +17,6 @@ from pydantic import BaseModel, Field
 
 from database.firebase_client import FirebaseDB
 
-# FastAPI router tanımı
 router = APIRouter(
     prefix="/api",
     tags=["User Management"],
@@ -27,12 +26,6 @@ router = APIRouter(
         500: {"description": "Sunucu hatası"},
     },
 )
-
-
-# ============================================================
-# Request / Response Modelleri
-# ============================================================
-
 
 class RegisterUserRequest(BaseModel):
     """
@@ -60,11 +53,6 @@ class RegisterUserRequest(BaseModel):
         description="Kullanıcının e-posta adresi (opsiyonel)",
         examples=["arda@example.com"],
     )
-
-
-# ============================================================
-# Endpoint'ler
-# ============================================================
 
 
 @router.post("/register-user", status_code=201)

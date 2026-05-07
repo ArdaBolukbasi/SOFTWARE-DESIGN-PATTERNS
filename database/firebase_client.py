@@ -1,27 +1,4 @@
-"""
-firebase_client.py — Singleton Pattern ile Firebase Bağlantısı
-================================================================
-🔷 DESIGN PATTERN: SINGLETON
 
-Bu modül, Firebase Firestore veritabanı bağlantısını Singleton tasarım
-kalıbı kullanarak yönetir. Singleton Pattern sayesinde uygulama boyunca
-sadece TEK BİR Firebase bağlantı nesnesi (instance) oluşturulur.
-
-Neden Singleton?
------------------
-- Firebase bağlantısı pahalı bir kaynaktır (ağ bağlantısı, kimlik doğrulama).
-- Her API isteğinde yeni bir bağlantı açmak kaynak israfına neden olur.
-- Singleton ile tüm istekler aynı bağlantıyı paylaşır → performans artar.
-
-Kullanım:
-    from database.firebase_client import FirebaseDB
-
-    db = FirebaseDB()           # İlk çağrıda bağlantı kurulur
-    db2 = FirebaseDB()          # Aynı instance döner (db is db2 → True)
-
-    db.save_document("users/user_123/expenses", data)
-    doc = db.get_document("users/user_123/expenses", "doc_id")
-"""
 
 import threading
 from datetime import datetime, timezone
@@ -35,36 +12,16 @@ from config import settings
 
 class FirebaseDB:
     """
-    Firebase Firestore veritabanı bağlantısını yöneten Singleton sınıfı.
-
-    Bu sınıf, Python'un __new__ metodu override edilerek klasik
-    thread-safe Singleton Pattern ile implemente edilmiştir.
-
-    Attributes:
-        _instance: Sınıfın tek örneğini (instance) tutan class-level değişken.
-        _initialized: Bağlantının zaten kurulup kurulmadığını izleyen bayrak.
-        _lock: Thread-safety için kullanılan kilit mekanizması.
-        _db: Firestore istemci (client) referansı.
-
-    Design Pattern:
-        Singleton — GoF Creational Patterns
-        Amaç: Bir sınıftan yalnızca bir örnek oluşturulmasını garanti eder
-        ve bu örneğe global bir erişim noktası sağlar.
+   firabse bağlantı kuran köprüdür bir ekre kurulur tüm veriler vu köprü ile iletilir
     """
 
-    _instance = None          # Tek instance referansı
-    _initialized = False      # İlk başlatma kontrolü
-    _lock = threading.Lock()  # Thread-safe erişim kilidi
+    _instance = None         
+    _initialized = False     
+    _lock = threading.Lock()  
 
     def __new__(cls) -> "FirebaseDB":
         """
-        Singleton instance oluşturma mekanizması.
-
-        Double-checked locking pattern kullanılarak thread-safe
-        bir şekilde tek instance garanti edilir.
-
-        Returns:
-            FirebaseDB: Sınıfın tek örneği.
+       bu fonnskiyon instance bakar ğer boşsa bi tane üretir eğer varsa git onu kullan der
         """
         if cls._instance is None:
             with cls._lock:
@@ -75,10 +32,7 @@ class FirebaseDB:
 
     def __init__(self) -> None:
         """
-        Firebase bağlantısını başlatır (sadece ilk çağrıda).
-
-        İkinci ve sonraki çağrılarda _initialized bayrağı True olduğu
-        için bağlantı tekrar kurulmaz — mevcut bağlantı kullanılır.
+       ilk başladğında fire base ile bağlanır  bu fonsiyon sadece bir kez çalışır 
         """
         if not FirebaseDB._initialized:
             with FirebaseDB._lock:
@@ -88,14 +42,7 @@ class FirebaseDB:
 
     def _connect(self) -> None:
         """
-        Firebase Admin SDK'yı başlatır ve Firestore istemcisini oluşturur.
-
-        Service Account JSON dosyası config.py'deki FIREBASE_CREDENTIALS_PATH
-        değişkeninden okunur.
-
-        Raises:
-            FileNotFoundError: Service account dosyası bulunamazsa.
-            ValueError: Geçersiz kimlik bilgileri sağlanırsa.
+      firebase bağlatısı kurar 
         """
         try:
             cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_PATH)
@@ -171,17 +118,7 @@ class FirebaseDB:
 
     def save_batch(self, collection_path: str, documents: list[dict]) -> list[str]:
         """
-        Birden fazla dökümanı toplu (batch) olarak Firestore'a kaydeder.
-
-        Firestore batch write kullanarak tek bir ağ isteğinde
-        birden fazla döküman yazılır — performans açısından daha verimli.
-
-        Args:
-            collection_path: Koleksiyon yolu (örn: "users/user_123/expenses").
-            documents: Kaydedilecek veri sözlüklerinin listesi.
-
-        Returns:
-            list[str]: Kaydedilen dökümanların ID listesi.
+        Birden fazla dökümanı toplu olarak Firestore'a kaydeder.
         """
         if not self.is_connected:
             print("⚠️  Firestore bağlantısı yok, toplu kayıt atlanıyor.")
@@ -211,13 +148,6 @@ class FirebaseDB:
     def get_document(self, collection_path: str, document_id: str) -> dict | None:
         """
         Firestore'dan belirli bir dökümanı okur.
-
-        Args:
-            collection_path: Koleksiyon yolu.
-            document_id: Okunacak dökümanın ID'si.
-
-        Returns:
-            dict | None: Döküman verisi veya bulunamazsa None.
         """
         if not self.is_connected:
             return None
@@ -234,12 +164,6 @@ class FirebaseDB:
     def get_collection(self, collection_path: str) -> list[dict]:
         """
         Bir koleksiyondaki tüm dökümanları okur.
-
-        Args:
-            collection_path: Koleksiyon yolu.
-
-        Returns:
-            list[dict]: Döküman verilerinin listesi.
         """
         if not self.is_connected:
             return []
